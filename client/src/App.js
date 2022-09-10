@@ -7,7 +7,7 @@ import Notifications from './components/Notifications';
 import Options from './components/Options';
 // import CanvasDraw from './components/CanvasDraw';
 import CanvasMediapipe from './components/CanvasMediapipe';
-import ForCanvas from './components/ForCanvas';
+// import ForCanvas from './components/ForCanvas';
 
 const useStyles = makeStyles((theme) => ({
     appBar: {

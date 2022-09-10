@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { Button, Grid, Typography, Paper} from '@material-ui/core';
+import { Grid, Typography, Paper} from '@material-ui/core';
 import { makeStyles } from "@material-ui/core/styles";
 import { SocketContext } from "../SocketContext";
 
