@@ -14,46 +14,28 @@ const useStyles = makeStyles(() => ({
     },
 }));
 
-const CanvasMediapipe = () => {
-    const { myVideo, userVideo } = useContext(SocketContext);
+const CanvasMediapipe = (props) => {
     const classes = useStyles();
     const canvasRef = useRef();
-    // let videoElement;
-    console.log("MyVideo canvas (outside useEffect),", myVideo.current);
-    console.log("UserVideo canvas (outside useEffect),", userVideo.current);
- 
-    // =======================================Holistic Mediapipe===========================
+    const canvasRefUser = useRef();
+    const { userVideo } = useContext(SocketContext);
     const connect = window.drawConnectors;
-    
-    // useEffect(() => {
-    //   const waitUserVideo = async () => {
-    //     const videoElement = await document.getElementById("userVideoId");
-    //     console.log("User video", videoElement);
-    //   } 
-    //   waitUserVideo().catch(console.error);
-    // }, []);
-
     function onResults(results){
-      if (typeof userVideo.current !== "undefined") {
-        var id = "userVideoId";
-      } else {
-        id = "myVideoId";
+      var cr ='';
+      if (props.id == 'myVideoId'){
+        cr = canvasRef;
+      } 
+      if (props.id == 'userVideoId'){
+        cr = canvasRefUser;
       }
-
-      // console.log(results);
-      const videoElement = document.getElementById(id);
+      const videoElement = document.getElementById(props.id);
       const videoWidth = videoElement.videoWidth;
       const videoHeight = videoElement.videoHeight;
-      // console.log('Video width, height >', videoWidth, videoHeight)
-
-      // Set canvas width
-      canvasRef.current.width = videoWidth;
-      canvasRef.current.height = videoHeight;
-  
-      const canvasElement = canvasRef.current;
+      cr.current.width = videoWidth;
+      cr.current.height = videoHeight;
+      const canvasElement = cr.current;
       const canvasCtx = canvasElement.getContext('2d');
       canvasCtx.save();
-  
       canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
       canvasCtx.drawImage(
         results.image,
@@ -62,7 +44,6 @@ const CanvasMediapipe = () => {
         canvasElement.width,
         canvasElement.height
       );
-  
       canvasCtx.globalCompositeOperation = 'source-over';
       connect(canvasCtx, results.poseLandmarks, HOLISTIC.POSE_CONNECTIONS,
                     {color: '#00FF00', lineWidth: 4});
@@ -73,21 +54,15 @@ const CanvasMediapipe = () => {
       connect(canvasCtx, results.rightHandLandmarks, HOLISTIC.HAND_CONNECTIONS,
                     {color: '#00CC00', lineWidth: 5});
       canvasCtx.restore();
-    // }
-  }
+    }
 
     useEffect(() => {
-      // const waitVideo = async () => {
-      //   document.getElementById("myVideoId");
-      // } 
-      // waitVideo().catch(console.error);
-
-      const holistic = new Holistic({locateFile: (file) => {
+      const holisticUser = new Holistic({locateFile: (file) => {
+        // console.log(file)
         return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
       }});
-      holistic.setOptions({
+      holisticUser.setOptions({
         modelComplexity: 1,
-        // selfieMode: true, 
         smoothLandmarks: true,
         enableSegmentation: true,
         smoothSegmentation: true,
@@ -95,50 +70,61 @@ const CanvasMediapipe = () => {
         minDetectionConfidence: 0.5,
         minTrackingConfidence: 0.5
       });
-      holistic.onResults(onResults);
 
-      if (typeof userVideo.current !== "undefined") {
-        var id = "userVideoId";
-      } else {
-        id = "myVideoId";
+      const holistic = new Holistic({locateFile: (file) => {
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
+      }});
+      holistic.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        enableSegmentation: true,
+        smoothSegmentation: true,
+        refineFaceLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+      });
+
+      if (props.id == "myVideoId"){
+        holistic.onResults(onResults);
+        const videoElement = document.getElementById("myVideoId");
+        const camera = new cam.Camera(videoElement, {
+          onFrame: async () => {
+            await holistic.send({image: videoElement});
+          },
+          width: 640,
+          height: 480,
+        });
+        camera.start(); 
       }
 
-      const videoElement = document.getElementById(id);
-      // const videoElement = myVideo.current;
-      console.log('myVideo canvas (inside useEffect):', myVideo.current);
-      console.log('userVideo canvas (inside useEffect):', userVideo.current);
+      if (props.id == "userVideoId"){
+          holisticUser.onResults(onResults);
+          const videoElement = document.getElementById("userVideoId");
+          // holisticUser.send({image: videoElement});
 
-      const camera = new cam.Camera(videoElement, {
-        onFrame: async () => {
-          await holistic.send({image: videoElement});
-        },
-        width: 640,
-        height: 480,
-      });
-      camera.start();   
-
-      // =========Another way to send images for prediction=======
-      // videoElement.current.onChange = async function (e){
-      //   const img = new Image();
-      //     img.onload = async function (){
-      //       var s_time = new Date();
-      //       await holistic.send({image: img});
-      //       var e_time = new Date();
-      //       console.log('the image is drawn:' + (e_time.getTime() - s_time.getTime()));
-      //   }
-      //   // eslint-disable-next-line
-      //   img.src = URL.createObjectURL(e.target.files[0]);
-      //   e.target.value='';
-      // }
-     
-      // eslint-disable-next-line
-      }, []);
-      
-    return (
-      <>
-        <canvas ref={canvasRef} id='canvasId' className={classes.canvas} />
-      </>
-    );
+          if (videoElement.current){
+            videoElement.current.onChange = async function (e){
+              const img = new Image();
+                img.onload = async function (){
+                  var s_time = new Date();
+                  await holistic.send({image: img});
+                  var e_time = new Date();
+                  console.log('the image is drawn:' + (e_time.getTime() - s_time.getTime()));
+              }
+              // eslint-disable-next-line
+              img.src = URL.createObjectURL(e.target.files[0]);
+              e.target.value='';
+          }
+      }
+        }
+      }, []); // End of UseEffect
+    if (props.id == "myVideoId") {
+      return <canvas ref={canvasRef} id='canvasId' className={classes.canvas} />
+    } 
+    
+    if (props.id == "userVideoId") {
+      return <canvas ref={canvasRefUser} id='canvasUserId' className={classes.canvas} />
+    } 
 };
 
 export default CanvasMediapipe;

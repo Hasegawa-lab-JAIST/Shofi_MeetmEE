@@ -5,7 +5,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import VideoPlayer from './components/VideoPlayer';
 import Notifications from './components/Notifications';
 import Options from './components/Options';
-// import CanvasDraw from './components/CanvasDraw';
+import CanvasDraw from './components/CanvasDraw';
 import CanvasMediapipe from './components/CanvasMediapipe';
 // import ForCanvas from './components/ForCanvas';
 
@@ -44,11 +44,7 @@ const App = () => {
             <AppBar className={classes.appBar} position="static" color="inherit">
                 <Typography variant="h2" align="center"> MeetmEE </Typography>
             </AppBar>
-            <VideoPlayer >
-              <CanvasMediapipe />
-            </VideoPlayer>
-            {/* <ForCanvas /> */}
-            {/* <CanvasDraw /> */}
+            <VideoPlayer> </VideoPlayer>
             <Options>
               <Notifications />
             </Options>

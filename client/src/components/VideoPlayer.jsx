@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import { Grid, Typography, Paper} from '@material-ui/core';
 import { makeStyles } from "@material-ui/core/styles";
 import { SocketContext } from "../SocketContext";
+import CanvasMediapipe from '../components/CanvasMediapipe';
 
 const useStyles = makeStyles((theme) => ({
     // video: {
@@ -32,8 +33,8 @@ const useStyles = makeStyles((theme) => ({
 const VideoPlayer = ({children}) => {
     const { name, callAccepted, myVideo, userVideo, callEnded, stream, call } = useContext(SocketContext);
     const classes = useStyles();
-    console.log("MyVideo Video player,", myVideo.current);
-    console.log("UserVideo Video player,", userVideo.current);
+    // console.log("MyVideo Video player,", myVideo.current);
+    // console.log("UserVideo Video player,", userVideo.current);
    
     return (
         <Grid container className={classes.gridContainer}> 
@@ -44,7 +45,7 @@ const VideoPlayer = ({children}) => {
                         <Typography variant="h5" gutterBottom>{name || 'Name'}</Typography>
                         <video id="myVideoId"  playsInline muted ref={myVideo} autoPlay className={classes.video}/>
                         {children}
-                        {/* <Button id="btnPrediction" variant="contained" color="primary">Prediction</Button>  */}
+                        <CanvasMediapipe id="myVideoId"></CanvasMediapipe>
                     </Grid>
                 </Paper>
             )}
@@ -56,6 +57,7 @@ const VideoPlayer = ({children}) => {
                         <Typography variant="h5" gutterBottom>{call.name || 'Name'}</Typography>
                         <video id="userVideoId" playsInline ref={userVideo} autoPlay className={classes.video} />
                         {children}
+                        <CanvasMediapipe id="userVideoId"></CanvasMediapipe>
                     </Grid>
                 </Paper>
             )}
