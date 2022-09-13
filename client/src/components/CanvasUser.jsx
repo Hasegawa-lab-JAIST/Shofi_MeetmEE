@@ -1,10 +1,10 @@
-import React, { useRef, useEffect, useContext } from "react";
+import React, { useContext, useRef, useEffect } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import { SocketContext } from "../SocketContext";
 
 import {Holistic} from '@mediapipe/holistic';
 import * as HOLISTIC from '@mediapipe/holistic';
-import * as cam from "@mediapipe/camera_utils";
+// import * as cam from "@mediapipe/camera_utils";
 
 const useStyles = makeStyles(() => ({
     canvas: {
@@ -18,31 +18,20 @@ const CanvasMediapipe = (props) => {
     const { myVideo, userVideo } = useContext(SocketContext);
     const classes = useStyles();
     const canvasRef = useRef();
-    // const canvasRefuser = useRef();
- 
-    // ======================Holistic Mediapipe===========================
-    const connect = window.drawConnectors;
     
+    // =======================================Holistic Mediapipe===========================
+    const connect = window.drawConnectors;
+  
     function onResults(results){
-      if (props.id === "myVideoId"){
-        var video = myVideo;
-        var cr = canvasRef;
-      }
-
-      // if (props.id === "userVideoId"){
-      //   video = userVideo;
-      //   cr = canvasRefuser
-      // }
       // console.log(results);
-
-      const videoElement = video.current;
+      const videoElement = document.getElementById(props.id);
       const videoWidth = videoElement.videoWidth;
       const videoHeight = videoElement.videoHeight;
       // console.log('Video width, height >', videoWidth, videoHeight)
 
       // Set canvas width
-      cr.current.width = videoWidth;
-      cr.current.height = videoHeight;
+      canvasRef.current.width = videoWidth;
+      canvasRef.current.height = videoHeight;
   
       const canvasElement = canvasRef.current;
       const canvasCtx = canvasElement.getContext('2d');
@@ -84,47 +73,22 @@ const CanvasMediapipe = (props) => {
         minDetectionConfidence: 0.5,
         minTrackingConfidence: 0.5
       });
-        
-      if(props.id === "myVideoId"){
-        holistic.onResults(onResults);
-        const camera = new cam.Camera(myVideo.current, {
-          onFrame: async () => {
-            await holistic.send({image: myVideo.current});
-          },
-          width: 640,
-          height: 480,
-        });
-        camera.start();   
-      }
+      holistic.onResults(onResults);
 
-      // if (props.id === "userVideoId"){
-      //   holistic.onResults(onResults);
-      //   // update prediction every 1s.
-      //   setInterval(() => {
-      //     holistic.send({image: userVideo.current});
-      //   },2000);
-      // }
-         
+        // update prediction every 1s.
+        setInterval(() => {
+          holistic.send({image: userVideo.current});
+        },1000); 
+     
       // eslint-disable-next-line
       }, []);
     
-      if (props.id === "myVideoId"){
-        return (
-          <>
-          {/* {props.id === "myVideoId"} */}
-            <canvas ref={canvasRef} className={classes.canvas} />
-          </>
-        );
-      }
-
-      // if (props.id === "userVideoId"){
-      //   return (
-      //     <>
-      //     {/* {props.id === "myVideoId"} */}
-      //       <canvas ref={canvasRefuser} className={classes.canvas} />
-      //     </>
-      //   );
-      // }
+      return (
+        <>
+        {props.id === "userVideoId"}
+          <canvas ref={canvasRef} id='canvasId' className={classes.canvas} />
+        </>
+      );
 };
 
 export default CanvasMediapipe;

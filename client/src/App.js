@@ -6,7 +6,7 @@ import VideoPlayer from './components/VideoPlayer';
 import Notifications from './components/Notifications';
 import Options from './components/Options';
 // import CanvasDraw from './components/CanvasDraw';
-import CanvasMediapipe from './components/CanvasMediapipe';
+// import CanvasMediapipe from './components/CanvasMediapipe';
 // import ForCanvas from './components/ForCanvas';
 
 const useStyles = makeStyles((theme) => ({
@@ -44,9 +44,10 @@ const App = () => {
             <AppBar className={classes.appBar} position="static" color="inherit">
                 <Typography variant="h2" align="center"> MeetmEE </Typography>
             </AppBar>
-            <VideoPlayer >
+            <VideoPlayer />
+            {/* <VideoPlayer >
               <CanvasMediapipe />
-            </VideoPlayer>
+            </VideoPlayer> */}
             {/* <ForCanvas /> */}
             {/* <CanvasDraw /> */}
             <Options>
