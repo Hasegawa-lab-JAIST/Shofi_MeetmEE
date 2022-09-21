@@ -15,7 +15,7 @@ const useStyles = makeStyles(() => ({
 }));
 
 const CanvasMediapipe = (props) => {
-    const { myVideo, userVideo } = useContext(SocketContext);
+    const {userVideo } = useContext(SocketContext);
     const classes = useStyles();
     const canvasRef = useRef();
     
@@ -75,12 +75,31 @@ const CanvasMediapipe = (props) => {
       });
       holistic.onResults(onResults);
 
-        // update prediction every 1s.
-        setInterval(() => {
-          holistic.send({image: userVideo.current});
-        },1000); 
+      // let imageCapture;
+      let prevTime;
+      // const rawVideoCanvas = document.getElementById("rawVideoCanvas");
+      const userVideoTag = userVideo.current;
+      async function drawImage(){
+        if (Date.now() - prevTime > 60) {
+          prevTime = Date.now();
+          if (userVideoTag.currentTime !== 0){
+            const imageBitMap = await createImageBitmap(userVideoTag);
+            await holistic.send({image: imageBitMap}); 
+          }
+        }
+        window.requestAnimationFrame(drawImage);
+      }
+
+      userVideoTag.play();
+
+      prevTime = Date.now();
+      window.requestAnimationFrame(drawImage);
+
+        // // update prediction every 1s.
+        // setInterval(() => {
+        //   holistic.send({image: userVideo.current});
+        // },1000); 
      
-      // eslint-disable-next-line
       }, []);
     
       return (

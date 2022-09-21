@@ -4,7 +4,6 @@ import { SocketContext } from "../SocketContext";
 
 import {Holistic} from '@mediapipe/holistic';
 import * as HOLISTIC from '@mediapipe/holistic';
-import * as cam from "@mediapipe/camera_utils";
 
 const useStyles = makeStyles(() => ({
     canvas: {
@@ -18,7 +17,7 @@ const CanvasMediapipe = (props) => {
     const { myVideo, userVideo } = useContext(SocketContext);
     const classes = useStyles();
     const canvasRef = useRef();
-    // const canvasRefuser = useRef();
+    const canvasRefuser = useRef();
  
     // ======================Holistic Mediapipe===========================
     const connect = window.drawConnectors;
@@ -29,10 +28,10 @@ const CanvasMediapipe = (props) => {
         var cr = canvasRef;
       }
 
-      // if (props.id === "userVideoId"){
-      //   video = userVideo;
-      //   cr = canvasRefuser
-      // }
+      if (props.id === "userVideoId"){
+        video = userVideo;
+        cr = canvasRefuser
+      }
       // console.log(results);
 
       const videoElement = video.current;
@@ -65,15 +64,15 @@ const CanvasMediapipe = (props) => {
       connect(canvasCtx, results.leftHandLandmarks, HOLISTIC.HAND_CONNECTIONS,
                     {color: '#CC0000', lineWidth: 5});
       connect(canvasCtx, results.rightHandLandmarks, HOLISTIC.HAND_CONNECTIONS,
-                    {color: '#00CC00', lineWidth: 5});
+                    {color: '#CC0000', lineWidth: 5});
       canvasCtx.restore();
-    // }
   }
 
     useEffect(() => {
       const holistic = new Holistic({locateFile: (file) => {
         return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
       }});
+
       holistic.setOptions({
         modelComplexity: 1,
         // selfieMode: true, 
@@ -84,18 +83,38 @@ const CanvasMediapipe = (props) => {
         minDetectionConfidence: 0.5,
         minTrackingConfidence: 0.5
       });
-        
-      if(props.id === "myVideoId"){
-        holistic.onResults(onResults);
-        const camera = new cam.Camera(myVideo.current, {
-          onFrame: async () => {
-            await holistic.send({image: myVideo.current});
-          },
-          width: 640,
-          height: 480,
-        });
-        camera.start();   
+      holistic.onResults(onResults);
+
+      // let imageCapture;
+      let prevTime;
+      // const rawVideoCanvas = document.getElementById("rawVideoCanvas");
+      const myVideoTag = myVideo.current;
+      async function drawImage(){
+        if (Date.now() - prevTime > 60) {
+          prevTime = Date.now();
+          if (myVideoTag.currentTime !== 0){
+            const imageBitMap = await createImageBitmap(myVideoTag);
+            await holistic.send({image: imageBitMap}); 
+          }
+        }
+        window.requestAnimationFrame(drawImage);
       }
+
+      myVideoTag.play();
+      prevTime = Date.now();
+      window.requestAnimationFrame(drawImage);
+        
+      // if(props.id === "myVideoId"){
+      //   holistic.onResults(onResults);
+      //   const camera = new cam.Camera(myVideo.current, {
+      //     onFrame: async () => {
+      //       await holistic.send({image: myVideo.current});
+      //     },
+      //     width: 640,
+      //     height: 480,
+      //   });
+      //   camera.start();   
+      // }
 
       // if (props.id === "userVideoId"){
       //   holistic.onResults(onResults);
@@ -104,27 +123,23 @@ const CanvasMediapipe = (props) => {
       //     holistic.send({image: userVideo.current});
       //   },2000);
       // }
-         
-      // eslint-disable-next-line
       }, []);
     
       if (props.id === "myVideoId"){
         return (
           <>
-          {/* {props.id === "myVideoId"} */}
             <canvas ref={canvasRef} className={classes.canvas} />
           </>
         );
       }
 
-      // if (props.id === "userVideoId"){
-      //   return (
-      //     <>
-      //     {/* {props.id === "myVideoId"} */}
-      //       <canvas ref={canvasRefuser} className={classes.canvas} />
-      //     </>
-      //   );
-      // }
+      if (props.id === "userVideoId"){
+        return (
+          <>
+            <canvas ref={canvasRefuser} className={classes.canvas} />
+          </>
+        );
+      }
 };
 
 export default CanvasMediapipe;

@@ -5,6 +5,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import VideoPlayer from './components/VideoPlayer';
 import Notifications from './components/Notifications';
 import Options from './components/Options';
+// import Canvas from './components/Canvas';
 // import CanvasDraw from './components/CanvasDraw';
 // import CanvasMediapipe from './components/CanvasMediapipe';
 // import ForCanvas from './components/ForCanvas';
@@ -24,9 +25,6 @@ const useStyles = makeStyles((theme) => ({
         width: '90%',
       },
     },
-    // image: {
-    //   marginLeft: '15px',
-    // },
 
     wrapper: {
       display: 'flex',
@@ -46,9 +44,8 @@ const App = () => {
             </AppBar>
             <VideoPlayer />
             {/* <VideoPlayer >
-              <CanvasMediapipe />
+              <Canvas />
             </VideoPlayer> */}
-            {/* <ForCanvas /> */}
             {/* <CanvasDraw /> */}
             <Options>
               <Notifications />

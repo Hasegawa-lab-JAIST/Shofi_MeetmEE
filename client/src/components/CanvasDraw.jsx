@@ -37,11 +37,6 @@ const CanvasDraw = () => {
     const { name, callAccepted, myVideo, userVideo, callEnded, stream, call } = useContext(SocketContext);
     const classes = useStyles();
 
-    const [childElementSize, setChildElementSize] = useState({
-      width: 640,
-      height: 480,
-  });
-
     const canvasRef = useRef();
     // =======================================Holistic Mediapipe===========================
     const connect = window.drawConnectors;

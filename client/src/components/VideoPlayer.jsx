@@ -1,9 +1,9 @@
 import React, { useContext } from "react";
-import { Button, Grid, Typography, Paper} from '@material-ui/core';
+import { Grid, Typography, Paper} from '@material-ui/core';
 import { makeStyles } from "@material-ui/core/styles";
 import { SocketContext } from "../SocketContext";
 import CanvasMediapipe from "./CanvasMediapipe";
-import CanvasUser from "./CanvasUser";
+// import CanvasUser from "./CanvasUser";
 
 const useStyles = makeStyles((theme) => ({
     // video: {
@@ -34,8 +34,6 @@ const useStyles = makeStyles((theme) => ({
 const VideoPlayer = () => {
     const { name, callAccepted, myVideo, userVideo, callEnded, stream, call } = useContext(SocketContext);
     const classes = useStyles();
-    // console.log("MyVideo Video player,", myVideo.current);
-    // console.log("UserVideo Video player,", userVideo.current);
    
     return (
         <Grid container className={classes.gridContainer}> 
@@ -57,7 +55,7 @@ const VideoPlayer = () => {
                     <Grid item xs={12} md={6}>
                         <Typography variant="h5" gutterBottom>{call.name || 'Name'}</Typography>
                         <video id="userVideoId" playsInline ref={userVideo} autoPlay className={classes.video} />
-                        <CanvasUser id="userVideoId" />
+                        <CanvasMediapipe id="userVideoId" />
                         {/* <Button variant="contained" color="primary" onClick={CanvasUser}>Prediction</Button> */}
                     </Grid>
                 </Paper>
