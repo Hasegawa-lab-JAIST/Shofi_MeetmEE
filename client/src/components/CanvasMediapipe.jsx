@@ -4,6 +4,7 @@ import { SocketContext } from "../SocketContext";
 
 import {Holistic} from '@mediapipe/holistic';
 import * as HOLISTIC from '@mediapipe/holistic';
+// import * as cam from "@mediapipe/camera_utils";
 
 const useStyles = makeStyles(() => ({
     canvas: {
@@ -14,7 +15,7 @@ const useStyles = makeStyles(() => ({
 }));
 
 const CanvasMediapipe = (props) => {
-    const { myVideo, userVideo } = useContext(SocketContext);
+    const { myVideo,userVideo } = useContext(SocketContext);
     const classes = useStyles();
     const canvasRef = useRef();
     const canvasRefuser = useRef();
@@ -30,7 +31,7 @@ const CanvasMediapipe = (props) => {
 
       if (props.id === "userVideoId"){
         video = userVideo;
-        cr = canvasRefuser
+        cr = canvasRefuser;
       }
       // console.log(results);
 
@@ -66,6 +67,7 @@ const CanvasMediapipe = (props) => {
       connect(canvasCtx, results.rightHandLandmarks, HOLISTIC.HAND_CONNECTIONS,
                     {color: '#CC0000', lineWidth: 5});
       canvasCtx.restore();
+    // }
   }
 
     useEffect(() => {
@@ -85,9 +87,7 @@ const CanvasMediapipe = (props) => {
       });
       holistic.onResults(onResults);
 
-      // let imageCapture;
       let prevTime;
-      // const rawVideoCanvas = document.getElementById("rawVideoCanvas");
       const myVideoTag = myVideo.current;
       async function drawImage(){
         if (Date.now() - prevTime > 60) {
@@ -101,6 +101,7 @@ const CanvasMediapipe = (props) => {
       }
 
       myVideoTag.play();
+
       prevTime = Date.now();
       window.requestAnimationFrame(drawImage);
         
@@ -128,6 +129,7 @@ const CanvasMediapipe = (props) => {
       if (props.id === "myVideoId"){
         return (
           <>
+          {/* {props.id === "myVideoId"} */}
             <canvas ref={canvasRef} className={classes.canvas} />
           </>
         );
@@ -136,6 +138,7 @@ const CanvasMediapipe = (props) => {
       if (props.id === "userVideoId"){
         return (
           <>
+          {/* {props.id === "myVideoId"} */}
             <canvas ref={canvasRefuser} className={classes.canvas} />
           </>
         );

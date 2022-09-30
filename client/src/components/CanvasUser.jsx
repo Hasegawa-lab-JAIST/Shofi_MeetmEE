@@ -1,10 +1,9 @@
-import React, { useContext, useRef, useEffect } from "react";
+import React, { useRef, useEffect, useContext } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import { SocketContext } from "../SocketContext";
 
 import {Holistic} from '@mediapipe/holistic';
 import * as HOLISTIC from '@mediapipe/holistic';
-// import * as cam from "@mediapipe/camera_utils";
 
 const useStyles = makeStyles(() => ({
     canvas: {
@@ -14,20 +13,18 @@ const useStyles = makeStyles(() => ({
     },
 }));
 
-const CanvasMediapipe = (props) => {
-    const {userVideo } = useContext(SocketContext);
+const CanvasUser = () => {
+    const { myVideo } = useContext(SocketContext);
     const classes = useStyles();
     const canvasRef = useRef();
-    
-    // =======================================Holistic Mediapipe===========================
+
+    // ======================Holistic Mediapipe===========================
     const connect = window.drawConnectors;
-  
+    
     function onResults(results){
-      // console.log(results);
-      const videoElement = document.getElementById(props.id);
+      const videoElement = myVideo.current;
       const videoWidth = videoElement.videoWidth;
       const videoHeight = videoElement.videoHeight;
-      // console.log('Video width, height >', videoWidth, videoHeight)
 
       // Set canvas width
       canvasRef.current.width = videoWidth;
@@ -54,15 +51,19 @@ const CanvasMediapipe = (props) => {
       connect(canvasCtx, results.leftHandLandmarks, HOLISTIC.HAND_CONNECTIONS,
                     {color: '#CC0000', lineWidth: 5});
       connect(canvasCtx, results.rightHandLandmarks, HOLISTIC.HAND_CONNECTIONS,
-                    {color: '#00CC00', lineWidth: 5});
+                    {color: '#CC0000', lineWidth: 5});
       canvasCtx.restore();
-    // }
+
+      const meshedLocalMediaStream = canvasElement.captureStream();
+      console.log("meshed canvas in OnResult", meshedLocalMediaStream);
   }
 
     useEffect(() => {
+
       const holistic = new Holistic({locateFile: (file) => {
         return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
       }});
+
       holistic.setOptions({
         modelComplexity: 1,
         // selfieMode: true, 
@@ -75,39 +76,30 @@ const CanvasMediapipe = (props) => {
       });
       holistic.onResults(onResults);
 
-      // let imageCapture;
       let prevTime;
-      // const rawVideoCanvas = document.getElementById("rawVideoCanvas");
-      const userVideoTag = userVideo.current;
+
+      const myVideoTag = myVideo.current;
       async function drawImage(){
         if (Date.now() - prevTime > 60) {
           prevTime = Date.now();
-          if (userVideoTag.currentTime !== 0){
-            const imageBitMap = await createImageBitmap(userVideoTag);
+          if (myVideoTag.currentTime !== 0){
+            const imageBitMap = await createImageBitmap(myVideoTag);
             await holistic.send({image: imageBitMap}); 
           }
         }
         window.requestAnimationFrame(drawImage);
       }
 
-      userVideoTag.play();
-
       prevTime = Date.now();
       window.requestAnimationFrame(drawImage);
-
-        // // update prediction every 1s.
-        // setInterval(() => {
-        //   holistic.send({image: userVideo.current});
-        // },1000); 
-     
+        
       }, []);
-    
-      return (
-        <>
-        {props.id === "userVideoId"}
-          <canvas ref={canvasRef} id='canvasId' className={classes.canvas} />
-        </>
-      );
+        return (
+          <>
+            <canvas id="output_canvas" ref={canvasRef} className={classes.canvas} />
+            
+          </>
+        );
 };
 
-export default CanvasMediapipe;
+export default CanvasUser;

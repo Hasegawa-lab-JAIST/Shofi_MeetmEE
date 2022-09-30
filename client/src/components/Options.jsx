@@ -73,6 +73,7 @@ const Options = ( { children }) => {
                         </Grid>
                     </Grid>
                 </form>
+                <button id="make-pred">pred</button>
                 {children}
             </Paper>
         </Container>
