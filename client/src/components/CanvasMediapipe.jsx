@@ -4,7 +4,11 @@ import { SocketContext } from "../SocketContext";
 
 import {Holistic} from '@mediapipe/holistic';
 import * as HOLISTIC from '@mediapipe/holistic';
+<<<<<<< Updated upstream
 // import * as cam from "@mediapipe/camera_utils";
+=======
+import * as cam from "@mediapipe/camera_utils";
+>>>>>>> Stashed changes
 
 const useStyles = makeStyles(() => ({
     canvas: {
@@ -87,6 +91,7 @@ const CanvasMediapipe = (props) => {
       });
       holistic.onResults(onResults);
 
+<<<<<<< Updated upstream
       let prevTime;
       const myVideoTag = myVideo.current;
       async function drawImage(){
@@ -95,10 +100,61 @@ const CanvasMediapipe = (props) => {
           if (myVideoTag.currentTime !== 0){
             const imageBitMap = await createImageBitmap(myVideoTag);
             await holistic.send({image: imageBitMap}); 
-          }
-        }
-        window.requestAnimationFrame(drawImage);
+=======
+      // let prevTime;
+      // const myVideoTag = myVideo.current;
+      // async function drawImage(){
+      //   if (Date.now() - prevTime > 60) {
+      //     prevTime = Date.now();
+      //     if (myVideoTag.currentTime !== 0){
+      //       const imageBitMap = await createImageBitmap(myVideoTag);
+      //       await holistic.send({image: imageBitMap}); 
+      //     }
+      //   }
+      //   window.requestAnimationFrame(drawImage);
+      // }
+
+      // myVideoTag.play();
+      // prevTime = Date.now();
+      // window.requestAnimationFrame(drawImage);
+        
+      if(props.id === "myVideoId"){
+        holistic.onResults(onResults);
+        const camera = new cam.Camera(myVideo.current, {
+          onFrame: async () => {
+            await holistic.send({image: myVideo.current});
+          },
+          width: 640,
+          height: 480,
+        });
+        camera.start();   
       }
+
+      if (props.id === "userVideoId"){
+        holistic.onResults(onResults);
+        let prevTime;
+        const myVideoTag = userVideo.current;
+        async function drawImage(){
+          if (Date.now() - prevTime > 60) {
+            prevTime = Date.now();
+            if (myVideoTag.currentTime !== 0){
+              const imageBitMap = await createImageBitmap(myVideoTag);
+              await holistic.send({image: imageBitMap}); 
+            }
+>>>>>>> Stashed changes
+          }
+          window.requestAnimationFrame(drawImage);
+        }
+  
+        myVideoTag.play();
+        prevTime = Date.now();
+        window.requestAnimationFrame(drawImage);
+        // update prediction every 1s.
+        // setInterval(() => {
+        //   holistic.send({image: userVideo.current});
+        // },2000);
+      }
+<<<<<<< Updated upstream
 
       myVideoTag.play();
 
@@ -124,6 +180,8 @@ const CanvasMediapipe = (props) => {
       //     holistic.send({image: userVideo.current});
       //   },2000);
       // }
+=======
+>>>>>>> Stashed changes
       }, []);
     
       if (props.id === "myVideoId"){
