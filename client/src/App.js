@@ -5,10 +5,6 @@ import { makeStyles } from '@material-ui/core/styles';
 import VideoPlayer from './components/VideoPlayer';
 import Notifications from './components/Notifications';
 import Options from './components/Options';
-// import Canvas from './components/Canvas';
-// import CanvasDraw from './components/CanvasDraw';
-// import CanvasMediapipe from './components/CanvasMediapipe';
-// import ForCanvas from './components/ForCanvas';
 
 const useStyles = makeStyles((theme) => ({
     appBar: {
@@ -43,10 +39,6 @@ const App = () => {
                 <Typography variant="h2" align="center"> MeetmEE </Typography>
             </AppBar>
             <VideoPlayer />
-            {/* <VideoPlayer >
-              <Canvas />
-            </VideoPlayer> */}
-            {/* <CanvasDraw /> */}
             <Options>
               <Notifications />
             </Options>
