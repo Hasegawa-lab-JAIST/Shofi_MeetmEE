@@ -2,8 +2,9 @@ import React, { useContext } from "react";
 import { Grid, Typography, Paper} from '@material-ui/core';
 import { makeStyles } from "@material-ui/core/styles";
 import { SocketContext } from "../SocketContext";
-import CanvasMediapipe from "./CanvasMediapipe";
-// import CanvasUser from "./CanvasUser";
+// import CanvasMediapipe from "./CanvasMediapipe";
+import CanvasUser from "./CanvasUser";
+import CanvasMain from "./CanvasMain"
 
 const useStyles = makeStyles((theme) => ({
     // video: {
@@ -43,7 +44,7 @@ const VideoPlayer = () => {
                     <Grid item xs={12} md={6}>
                         <Typography variant="h5" gutterBottom>{name || 'Name'}</Typography>
                         <video id="myVideoId"  playsInline muted ref={myVideo} autoPlay className={classes.video}/>
-                        <CanvasMediapipe id="myVideoId" />
+                        <CanvasMain id="myVideoId" />
                         {/* <Button variant="contained" color="primary" onClick={CanvasMediapipe}>Prediction</Button>  */}
                     </Grid>
                 </Paper>
@@ -55,7 +56,7 @@ const VideoPlayer = () => {
                     <Grid item xs={12} md={6}>
                         <Typography variant="h5" gutterBottom>{call.name || 'Name'}</Typography>
                         <video id="userVideoId" playsInline ref={userVideo} autoPlay className={classes.video} />
-                        <CanvasMediapipe id="userVideoId" />
+                        <CanvasUser id="userVideoId" />
                         {/* <Button variant="contained" color="primary" onClick={CanvasUser}>Prediction</Button> */}
                     </Grid>
                 </Paper>
