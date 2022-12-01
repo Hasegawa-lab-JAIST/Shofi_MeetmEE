@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useContext } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import { SocketContext } from "../SocketContext";
-
+import axios from 'axios';
 import {Holistic} from '@mediapipe/holistic';
 import * as HOLISTIC from '@mediapipe/holistic';
 
@@ -26,6 +26,7 @@ const CanvasMine = (props) => {
       const videoElement = document.getElementById(props.id);
       const videoWidth = videoElement.videoWidth;
       const videoHeight = videoElement.videoHeight;
+      console.log(results)
 
       // Set canvas width
       canvasRef.current.width = videoWidth;
@@ -54,7 +55,21 @@ const CanvasMine = (props) => {
       connect(canvasCtx, results.rightHandLandmarks, HOLISTIC.HAND_CONNECTIONS,
                     {color: '#CC0000', lineWidth: 5});
       canvasCtx.restore();
-  }
+
+      // Step 1 - Send to prediction function and get the label and prob ()
+      // Sol1: Just JS (does not work)
+      // Sol2: Send landmark to python and get the class and prob
+      axios.post(`http://localhost:5050/api`, {
+        landmark_from_js: results,
+      })
+      .then(res => {
+        const predict_from_py = res.data;
+        console.log(predict_from_py.class)
+        console.log(predict_from_py.prob)
+      })
+      // Sol3: Send video instead landmark
+      // Step 2 - Write to CSV and draw a graph (optional)]
+    }
 
     useEffect(() => {
       const holistic = new Holistic({locateFile: (file) => {
