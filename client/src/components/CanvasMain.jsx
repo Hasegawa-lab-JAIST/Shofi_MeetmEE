@@ -4,8 +4,8 @@ import { SocketContext } from "../SocketContext";
 import axios from 'axios';
 import {Holistic} from '@mediapipe/holistic';
 import * as HOLISTIC from '@mediapipe/holistic';
-import { Grid, Typography, Paper} from '@material-ui/core';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Typography} from '@material-ui/core';
+import { LineChart, Line, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 const useStyles = makeStyles(() => ({
     canvas: {
@@ -28,41 +28,50 @@ function encodeImageBitmapToBase64(imageBitmap) {
 }
 
 function formatYAxis(value) {
-  if(value === 0) return "Not Engage"
-  if(value === 0.25) return ""
-  if(value === 0.5) return "Normal"
-  if(value === 0.75) return ""
-  if(value === 1) return "Engage"
-  return value
+  if(value === 0) return "Not Engaged"
+  if(value === 0.5) return "Normal Engaged"
+  if(value === 1) return "Very Engaged"
+  return ""
+}
+
+function formatEngagement(value) {
+  if(value === "NotEngaged") return 0
+  if(value === "NormalEngaged") return 0.5
+  if(value === "VeryEngaged") return 1
+  return 0
 }
 
 const CanvasMine = (props) => {
     const { myVideo } = useContext(SocketContext);
     const [response, setResponse] = useState(null);
-    const [chartData, setChartData] = useState(null);
+    const [chartData, setChartData] = useState([
+      {
+        "engagement": 0,
+      },
+      {
+        "engagement": 0.5,
+      },
+      {
+        "engagement": 1,
+      }
+    ]);
     const classes = useStyles();
     const canvasRef = useRef();
     const canvasRefuser = useRef();
- 
     // ======================Holistic Mediapipe===========================
     const connect = window.drawConnectors;
 
-    
-    
     function onResults(results){
       const videoElement = document.getElementById(props.id);
       const videoWidth = videoElement.videoWidth;
       const videoHeight = videoElement.videoHeight;
-      // console.log(results)
 
       // Set canvas width
       canvasRef.current.width = videoWidth;
       canvasRef.current.height = videoHeight;
-  
       const canvasElement = canvasRef.current;
       const canvasCtx = canvasElement.getContext('2d');
       canvasCtx.save();
-  
       canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
       canvasCtx.drawImage(
         results.image,
@@ -96,34 +105,19 @@ const CanvasMine = (props) => {
       // })
       // Sol3: Send video instead landmark
       const currentTime = new Date();
-      const time = currentTime.getTime().toString()
-      if (time.charAt(time.toString().length - 1) == 1) {
+      const timestamp = currentTime.getTime().toString()
+      if (parseInt(timestamp.substring(timestamp.length - 3)) <= 20) {
+        console.log("Request sent at: ", timestamp);
         const encodedImage = encodeImageBitmapToBase64(results.image);
-        axios.post('http://localhost:5050/api', { encodedImage }).then((response) => {
-          console.log(response.data);
-          setResponse(response.data);
-        });
+        if (timestamp) {
+          axios.post('http://localhost:5050/api', { encodedImage, timestamp }).then((response) => {
+            console.log("Response:", response.data);
+            setResponse(response.data);
+            // Step 2 - Realtime Engagement Chart
+            setChartData(oldChartData => [...oldChartData, {"engagement": formatEngagement(response.data.class)}]);
+          });
+        } 
       }
-      // Step 2 - Write to CSV and draw a graph
-      const data = [
-        {
-          "name": "1",
-          "engagement": 0,
-        },
-        {
-          "name": "2",
-          "engagement": 1,
-        },
-        {
-          "name": "3",
-          "engagement": 0.5,
-        },
-        {
-          "name": "4",
-          "engagement": 0,
-        }
-      ]
-      setChartData(data)
     }
 
     useEffect(() => {
@@ -133,7 +127,6 @@ const CanvasMine = (props) => {
 
       holistic.setOptions({
         modelComplexity: 1,
-        // selfieMode: true, 
         smoothLandmarks: true,
         enableSegmentation: true,
         smoothSegmentation: true,
@@ -161,27 +154,27 @@ const CanvasMine = (props) => {
       window.requestAnimationFrame(drawImage);
 
       }, []);
-    
         return (
           <>
           {props.id === "myVideoId"}
             <canvas ref={canvasRef} className={classes.canvas} />
             {response && (
               <div>
-                <Typography variant="h5" gutterBottom>{response.class}</Typography>
-                <Typography variant="h5" gutterBottom>{response.prob}</Typography>
+                <Typography variant="h5" gutterBottom>Engagement: {response.class}</Typography>
+                <Typography variant="h5" gutterBottom>Prediction Probability: {response.prob}</Typography>
               </div>        
             )}
-            {chartData && (
-                <LineChart width={500} height={250} data={chartData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                {/* <XAxis dataKey="name" /> */}
-                <YAxis tickFormatter={formatYAxis} />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="engagement" stroke="#82ca9d" />
-                </LineChart>
+            {response && chartData && (
+                <div style={{ marginTop: "10px"}}>
+                  <LineChart width={500} height={250} data={chartData}
+                  margin={{ top: 5, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <YAxis tick= {{ transform: "translate(0, 4)" }} tickFormatter={formatYAxis} />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="engagement" stroke="#82ca9d" />
+                  </LineChart>
+                </div>
             )}
           </>
         );
