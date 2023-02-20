@@ -15,6 +15,7 @@ const useStyles = makeStyles(() => ({
     },
 }));
 
+// Extract image
 function encodeImageBitmapToBase64(imageBitmap) {
   const canvas = document.createElement('canvas');
   canvas.width = imageBitmap.width;
@@ -27,6 +28,7 @@ function encodeImageBitmapToBase64(imageBitmap) {
   return dataURL.replace(/^data:image\/(png|jpg);base64,/, '');
 }
 
+// For live graph
 function formatYAxis(value) {
   if(value === 0) return "Not Engaged"
   if(value === 0.5) return "Normal Engaged"
@@ -43,6 +45,10 @@ function formatEngagement(value) {
 
 const CanvasMine = (props) => {
     const { myVideo } = useContext(SocketContext);
+    const classes = useStyles();
+    const canvasRef = useRef();
+    // const canvasRefuser = useRef();
+
     const [response, setResponse] = useState(null);
     const [chartData, setChartData] = useState([
       {
@@ -55,9 +61,6 @@ const CanvasMine = (props) => {
         "engagement": 1,
       }
     ]);
-    const classes = useStyles();
-    const canvasRef = useRef();
-    const canvasRefuser = useRef();
     // ======================Holistic Mediapipe===========================
     const connect = window.drawConnectors;
 
