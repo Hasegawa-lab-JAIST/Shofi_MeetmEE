@@ -4,7 +4,7 @@ import { SocketContext } from "../SocketContext";
 import axios from 'axios';
 import {Holistic} from '@mediapipe/holistic';
 import * as HOLISTIC from '@mediapipe/holistic';
-import { Typography} from '@material-ui/core';
+import { Button, Typography, Grid} from '@material-ui/core';
 import { LineChart, Line, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 const useStyles = makeStyles(() => ({
@@ -45,10 +45,11 @@ function formatEngagement(value) {
 
 const CanvasMine = (props) => {
     const { myVideo } = useContext(SocketContext);
+    const [isMeshOn, setIsMeshOn] = useState(false);
+    const [isPredictOn, setIsPredictOn] = useState(false);
     const classes = useStyles();
     const canvasRef = useRef();
     // const canvasRefuser = useRef();
-
     const [response, setResponse] = useState(null);
     const [chartData, setChartData] = useState([
       {
@@ -61,14 +62,20 @@ const CanvasMine = (props) => {
         "engagement": 1,
       }
     ]);
+
+    const handleMesh = () => {
+      setIsMeshOn(!isMeshOn);
+    };
+    
+    const handlePredict = () => {
+      setIsPredictOn(!isPredictOn);
+    };
     // ======================Holistic Mediapipe===========================
     const connect = window.drawConnectors;
-
-    function onResults(results){
+    function onResults(results, m, p){
       const videoElement = document.getElementById(props.id);
       const videoWidth = videoElement.videoWidth;
       const videoHeight = videoElement.videoHeight;
-
       // Set canvas width
       canvasRef.current.width = videoWidth;
       canvasRef.current.height = videoHeight;
@@ -83,18 +90,19 @@ const CanvasMine = (props) => {
         canvasElement.width,
         canvasElement.height
       );
-  
-      canvasCtx.globalCompositeOperation = 'source-over';
-      connect(canvasCtx, results.poseLandmarks, HOLISTIC.POSE_CONNECTIONS,
-                    {color: '#00FF00', lineWidth: 4});
-      connect(canvasCtx, results.faceLandmarks, HOLISTIC.FACEMESH_TESSELATION,
-                    {color: '#C0C0C070', lineWidth: 1});
-      connect(canvasCtx, results.leftHandLandmarks, HOLISTIC.HAND_CONNECTIONS,
-                    {color: '#CC0000', lineWidth: 5});
-      connect(canvasCtx, results.rightHandLandmarks, HOLISTIC.HAND_CONNECTIONS,
-                    {color: '#CC0000', lineWidth: 5});
-      canvasCtx.restore();
-
+      if (m) {
+        console.log("Mesh running")
+        canvasCtx.globalCompositeOperation = 'source-over';
+        connect(canvasCtx, results.poseLandmarks, HOLISTIC.POSE_CONNECTIONS,
+          { color: '#00FF00', lineWidth: 4 });
+        connect(canvasCtx, results.faceLandmarks, HOLISTIC.FACEMESH_TESSELATION,
+          { color: '#C0C0C070', lineWidth: 1 });
+        connect(canvasCtx, results.leftHandLandmarks, HOLISTIC.HAND_CONNECTIONS,
+          { color: '#CC0000', lineWidth: 5 });
+        connect(canvasCtx, results.rightHandLandmarks, HOLISTIC.HAND_CONNECTIONS,
+          { color: '#CC0000', lineWidth: 5 });
+        canvasCtx.restore();
+      }
       // Step 1 - Send to prediction function and get the label and prob ()
       // Sol1: Just JS (does not work)
       // Sol2: Send landmark to python and get the class and prob
@@ -107,19 +115,23 @@ const CanvasMine = (props) => {
       //   console.log(predict_from_py.prob)
       // })
       // Sol3: Send video instead landmark
-      const currentTime = new Date();
-      const timestamp = currentTime.getTime().toString()
-      if (parseInt(timestamp.substring(timestamp.length - 3)) <= 20) {
-        console.log("Request sent at: ", timestamp);
-        const encodedImage = encodeImageBitmapToBase64(results.image);
-        if (timestamp) {
-          axios.post('http://localhost:5050/api', { encodedImage, timestamp }).then((response) => {
-            console.log("Response:", response.data);
-            setResponse(response.data);
-            // Step 2 - Realtime Engagement Chart
-            setChartData(oldChartData => [...oldChartData, {"engagement": formatEngagement(response.data.class)}]);
-          });
-        } 
+      // console.log("Prediction ", isPredictOn)
+      if (p) {
+        console.log("Prediction running")
+        const currentTime = new Date();
+        const timestamp = currentTime.getTime().toString()
+        if (parseInt(timestamp.substring(timestamp.length - 3)) <= 20) {
+          console.log("Request sent at: ", timestamp);
+          const encodedImage = encodeImageBitmapToBase64(results.image);
+          if (timestamp) {
+            axios.post('http://localhost:5050/api', { encodedImage, timestamp }).then((response) => {
+              console.log("Response:", response.data);
+              setResponse(response.data);
+              // Step 2 - Realtime Engagement Chart
+              setChartData(oldChartData => [...oldChartData, { "engagement": formatEngagement(response.data.class) }]);
+            });
+          }
+        }
       }
     }
 
@@ -137,26 +149,27 @@ const CanvasMine = (props) => {
         minDetectionConfidence: 0.5,
         minTrackingConfidence: 0.5
       });
-      holistic.onResults(onResults);
+      
+      holistic.onResults(r => onResults(r,isMeshOn, isPredictOn) );
         
       let prevTime;
       const myVideoTag = myVideo.current;
-      async function drawImage(){
+      async function drawImage() {
         if (Date.now() - prevTime > 60) {
           prevTime = Date.now();
-          if (myVideoTag.currentTime !== 0){
+          if (myVideoTag.currentTime !== 0) {
+            // console.log("Video Looping")
             const imageBitMap = await createImageBitmap(myVideoTag);
-            await holistic.send({image: imageBitMap}); 
+            await holistic.send({ image: imageBitMap });
           }
         }
         window.requestAnimationFrame(drawImage);
       }
-
       myVideoTag.play();
       prevTime = Date.now();
       window.requestAnimationFrame(drawImage);
-
-      }, []);
+      }, [isMeshOn, isPredictOn]);
+      
         return (
           <>
           {props.id === "myVideoId"}
@@ -167,6 +180,7 @@ const CanvasMine = (props) => {
                 <Typography variant="h5" gutterBottom>Prediction Probability: {response.prob}</Typography>
               </div>        
             )}
+
             {response && chartData && (
                 <div style={{ marginTop: "10px"}}>
                   <LineChart width={500} height={250} data={chartData}
@@ -179,6 +193,21 @@ const CanvasMine = (props) => {
                   </LineChart>
                 </div>
             )}
+
+            <div>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Button variant="contained" color={isMeshOn ? "secondary": "primary"} onClick={handleMesh}>
+                    Turn {isMeshOn ? 'off' : 'on'} Face Mesh
+                  </Button>
+                </Grid>
+                <Grid item xs={6}>
+                  <Button variant="contained" color={isPredictOn ? "secondary": "primary"} onClick={handlePredict}>
+                    Turn {isPredictOn ? 'off' : 'on'} Prediction
+                  </Button>
+                </Grid>
+              </Grid>
+            </div>
           </>
         );
 };
