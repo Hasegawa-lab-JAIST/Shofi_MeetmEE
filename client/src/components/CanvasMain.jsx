@@ -47,6 +47,7 @@ const CanvasMine = (props) => {
     const { myVideo } = useContext(SocketContext);
     const [isMeshOn, setIsMeshOn] = useState(false);
     const [isPredictOn, setIsPredictOn] = useState(false);
+    const [frameId, setFrameId] = useState(0);
     const classes = useStyles();
     const canvasRef = useRef();
     // const canvasRefuser = useRef();
@@ -64,10 +65,16 @@ const CanvasMine = (props) => {
     ]);
 
     const handleMesh = () => {
+      if (isMeshOn) {
+        cancelAnimationFrame(frameId)
+      }
       setIsMeshOn(!isMeshOn);
     };
     
     const handlePredict = () => {
+      if (isPredictOn) {
+        cancelAnimationFrame(frameId)
+      }
       setIsPredictOn(!isPredictOn);
     };
     // ======================Holistic Mediapipe===========================
@@ -129,6 +136,7 @@ const CanvasMine = (props) => {
               setResponse(response.data);
               // Step 2 - Realtime Engagement Chart
               setChartData(oldChartData => [...oldChartData, { "engagement": formatEngagement(response.data.class) }]);
+              // Step 3 - Write to file
             });
           }
         }
@@ -153,21 +161,23 @@ const CanvasMine = (props) => {
       holistic.onResults(r => onResults(r,isMeshOn, isPredictOn) );
         
       let prevTime;
+      let id; // Get animation frame ID so we can stop it through handleMesh event
       const myVideoTag = myVideo.current;
       async function drawImage() {
         if (Date.now() - prevTime > 60) {
           prevTime = Date.now();
           if (myVideoTag.currentTime !== 0) {
-            // console.log("Video Looping")
             const imageBitMap = await createImageBitmap(myVideoTag);
             await holistic.send({ image: imageBitMap });
           }
         }
-        window.requestAnimationFrame(drawImage);
+        id = window.requestAnimationFrame(drawImage);  
+        setFrameId(id)
       }
       myVideoTag.play();
       prevTime = Date.now();
-      window.requestAnimationFrame(drawImage);
+      id = window.requestAnimationFrame(drawImage);
+      setFrameId(id)
       }, [isMeshOn, isPredictOn]);
       
         return (
