@@ -4,7 +4,7 @@ import { SocketContext } from "../SocketContext";
 import axios from 'axios';
 import {Holistic} from '@mediapipe/holistic';
 import * as HOLISTIC from '@mediapipe/holistic';
-import { Typography} from '@material-ui/core';
+import { Typography, Button, Grid} from '@material-ui/core';
 import { LineChart, Line, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 const useStyles = makeStyles(() => ({
@@ -45,9 +45,9 @@ function formatEngagement(value) {
 
 const CanvasTheirs = (props) => {
     const {userVideo } = useContext(SocketContext);
-    const classes = useStyles();
     const canvasRef = useRef();
-    
+
+  // ---------For live graph------------      
     const [response, setResponse] = useState(null);
     const [chartData, setChartData] = useState([
       {
@@ -60,10 +60,30 @@ const CanvasTheirs = (props) => {
         "engagement": 1,
       }
     ]);
+
+    // ---------Flag for turn on/off button------------
+    const [isMeshOn, setIsMeshOn] = useState(false);
+    const [isPredictOn, setIsPredictOn] = useState(false);
+    const [frameId, setFrameId] = useState(0);
+    const classes = useStyles();    
+
+    const handleMesh = () => {
+      if (isMeshOn) {
+        cancelAnimationFrame(frameId)
+      }
+      setIsMeshOn(!isMeshOn);
+    };
+    
+    const handlePredict = () => {
+      if (isPredictOn) {
+        cancelAnimationFrame(frameId)
+      }
+      setIsPredictOn(!isPredictOn);
+    };
     // =======================================Holistic Mediapipe===========================
     const connect = window.drawConnectors;
   
-    function onResults(results){
+    function onResults(results, m, p){
       const videoElement = document.getElementById(props.id);
       const videoWidth = videoElement.videoWidth;
       const videoHeight = videoElement.videoHeight;
@@ -84,32 +104,38 @@ const CanvasTheirs = (props) => {
         canvasElement.width,
         canvasElement.height
       );
-  
-      canvasCtx.globalCompositeOperation = 'source-over';
-      connect(canvasCtx, results.poseLandmarks, HOLISTIC.POSE_CONNECTIONS,
-                    {color: '#00FF00', lineWidth: 4});
-      connect(canvasCtx, results.faceLandmarks, HOLISTIC.FACEMESH_TESSELATION,
-                    {color: '#C0C0C070', lineWidth: 1});
-      connect(canvasCtx, results.leftHandLandmarks, HOLISTIC.HAND_CONNECTIONS,
-                    {color: '#CC0000', lineWidth: 5});
-      connect(canvasCtx, results.rightHandLandmarks, HOLISTIC.HAND_CONNECTIONS,
-                    {color: '#00CC00', lineWidth: 5});
-      canvasCtx.restore();
+
+      if (m){
+        console.log("Mesh peer running")
+        canvasCtx.globalCompositeOperation = 'source-over';
+        connect(canvasCtx, results.poseLandmarks, HOLISTIC.POSE_CONNECTIONS,
+                      {color: '#00FF00', lineWidth: 4});
+        connect(canvasCtx, results.faceLandmarks, HOLISTIC.FACEMESH_TESSELATION,
+                      {color: '#C0C0C070', lineWidth: 1});
+        connect(canvasCtx, results.leftHandLandmarks, HOLISTIC.HAND_CONNECTIONS,
+                      {color: '#CC0000', lineWidth: 5});
+        connect(canvasCtx, results.rightHandLandmarks, HOLISTIC.HAND_CONNECTIONS,
+                      {color: '#00CC00', lineWidth: 5});
+        canvasCtx.restore();
+      }
       
       // send image for prediction
-      const currentTime = new Date();
-      const timestamp = currentTime.getTime().toString()
-      if (parseInt(timestamp.substring(timestamp.length - 3)) <= 20) {
-        console.log("Request sent at: ", timestamp);
-        const encodedImage = encodeImageBitmapToBase64(results.image);
-        if (timestamp) {
-          axios.post('http://localhost:5050/api', { encodedImage, timestamp }).then((response) => {
-            console.log("Response:", response.data);
-            setResponse(response.data);
-            // Step 2 - Realtime Engagement Chart
-            setChartData(oldChartData => [...oldChartData, {"engagement": formatEngagement(response.data.class)}]);
-          });
-        } 
+      if (p){
+        console.log("Prediction client running")
+        const currentTime = new Date();
+        const timestamp = currentTime.getTime().toString()
+        if (parseInt(timestamp.substring(timestamp.length - 3)) <= 20) {
+          console.log("Request sent at: ", timestamp);
+          const encodedImage = encodeImageBitmapToBase64(results.image);
+          if (timestamp) {
+            axios.post('http://localhost:5050/api', { encodedImage, timestamp }).then((response) => {
+              console.log("Response:", response.data);
+              setResponse(response.data);
+              // Step 2 - Realtime Engagement Chart
+              setChartData(oldChartData => [...oldChartData, {"engagement": formatEngagement(response.data.class)}]);
+            });
+          } 
+        }
       }
   }
 
@@ -127,9 +153,10 @@ const CanvasTheirs = (props) => {
         minDetectionConfidence: 0.5,
         minTrackingConfidence: 0.5
       });
-      holistic.onResults(onResults);
+      holistic.onResults(r => onResults(r,isMeshOn, isPredictOn) );
 
       let prevTime;
+      let id; // Get animation frame ID so we can stop it through handleMesh event
       const userVideoTag = userVideo.current;
       async function drawImage(){
         if (Date.now() - prevTime > 60) {
@@ -139,20 +166,20 @@ const CanvasTheirs = (props) => {
             await holistic.send({image: imageBitMap}); 
           }
         }
-        window.requestAnimationFrame(drawImage);
+        id = window.requestAnimationFrame(drawImage);
+        setFrameId(id)
       }
 
       userVideoTag.play();
-
       prevTime = Date.now();
       window.requestAnimationFrame(drawImage);
-
+      setFrameId(id)
         // // update prediction every 1s.
         // setInterval(() => {
         //   holistic.send({image: userVideo.current});
         // },1000); 
      
-      }, []);
+      }, [isMeshOn, isPredictOn]);
     
       return (
         <>
@@ -176,6 +203,21 @@ const CanvasTheirs = (props) => {
                   </LineChart>
                 </div>
             )}
+
+            <div>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Button variant="contained" color={isMeshOn ? "secondary": "primary"} onClick={handleMesh}>
+                    Turn {isMeshOn ? 'off' : 'on'} Face Mesh
+                  </Button>
+                </Grid>
+                <Grid item xs={6}>
+                  <Button variant="contained" color={isPredictOn ? "secondary": "primary"} onClick={handlePredict}>
+                    Turn {isPredictOn ? 'off' : 'on'} Prediction
+                  </Button>
+                </Grid>
+              </Grid>
+            </div>
         </>
       );
 };

@@ -45,12 +45,9 @@ function formatEngagement(value) {
 
 const CanvasMine = (props) => {
     const { myVideo } = useContext(SocketContext);
-    const [isMeshOn, setIsMeshOn] = useState(false);
-    const [isPredictOn, setIsPredictOn] = useState(false);
-    const [frameId, setFrameId] = useState(0);
-    const classes = useStyles();
     const canvasRef = useRef();
     // const canvasRefuser = useRef();
+    // ---------For live graph------------  
     const [response, setResponse] = useState(null);
     const [chartData, setChartData] = useState([
       {
@@ -63,6 +60,12 @@ const CanvasMine = (props) => {
         "engagement": 1,
       }
     ]);
+
+    // ---------Flag for turn on/off button------------
+    const [isMeshOn, setIsMeshOn] = useState(false);
+    const [isPredictOn, setIsPredictOn] = useState(false);
+    const [frameId, setFrameId] = useState(0);
+    const classes = useStyles();    
 
     const handleMesh = () => {
       if (isMeshOn) {
