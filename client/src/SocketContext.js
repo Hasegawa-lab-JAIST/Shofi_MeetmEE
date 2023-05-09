@@ -8,7 +8,7 @@ import Peer from 'simple-peer';
 
 const SocketContext = createContext();
 
-const socket = io('http://localhost:5000');
+const socket = io('http://103.40.122.126:5000');
 // const socket = io('http://ec2-13-208-246-210.ap-northeast-3.compute.amazonaws.com')
 // const socket = io('https://webrtc-ee.herokuapp.com/');
 
