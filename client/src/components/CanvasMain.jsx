@@ -134,7 +134,8 @@ const CanvasMine = (props) => {
           console.log("Request sent at: ", timestamp);
           const encodedImage = encodeImageBitmapToBase64(results.image);
           if (timestamp) {
-            axios.post('http://localhost:5050/api', { encodedImage, timestamp }).then((response) => {
+            // axios.post('http://localhost:5050/api', { encodedImage, timestamp }).then((response) => {
+              axios.post('https://594c-62-216-205-190.ngrok-free.app/api', { encodedImage, timestamp }).then((response) => {
               console.log("Response:", response.data);
               setResponse(response.data);
               // Step 2 - Realtime Engagement Chart
